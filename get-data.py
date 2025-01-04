@@ -20,6 +20,8 @@ class BinanceDataFetcher:
         Initialize the Binance client with the provided API key and secret.
         """
         self.client = Client(api_key, api_secret)
+        self.api_limit = 1000
+        self.data = {}
 
     def _get_klines(self, symbol, interval, start_time, end_time):
         """
@@ -31,7 +33,7 @@ class BinanceDataFetcher:
                 interval=interval,
                 start_str=start_time,
                 end_str=end_time,
-                limit=1000,  # Max limit per API call
+                limit=self.api_limit,  # Max limit per API call
             )
             return klines
         except Exception as e:
@@ -49,12 +51,18 @@ class BinanceDataFetcher:
             DataFrame containing the historical data.
         """
         # Convert start_date to timestamp
-        start_time = datetime.datetime.strptime(start_date, "%d %b %Y")
-        start_timestamp = int(start_time.timestamp() * 1000)
+        if symbol not in self.data:
+            self.data[symbol] = {}
+        if interval not in self.data[symbol]:
+            self.data[symbol][interval] = []
+            start_time = datetime.datetime.strptime(start_date, "%d %b %Y")
+            start_timestamp = int(start_time.timestamp() * self.api_limit)
+        else:
+            start_timestamp = self.data[symbol][interval][-1][6] + 1
         
         # Current time
-        end_timestamp = int(time.time() * 1000)
-        
+        end_timestamp = int(time.time() * self.api_limit)
+
         # Placeholder for all data
         all_klines = []
         current_start = start_timestamp
@@ -74,16 +82,19 @@ class BinanceDataFetcher:
             all_klines.extend(klines)
             current_start = klines[-1][6] + 1  # CloseTime + 1ms
 
+        self.data[symbol][interval].extend(all_klines)
+        
         # Convert to DataFrame
-        df = pd.DataFrame(all_klines, columns=[
+        df = pd.DataFrame(self.data[symbol][interval], columns=[
             "OpenTime", "Open", "High", "Low", "Close", "Volume", 
             "CloseTime", "QuoteAssetVolume", "NumberOfTrades", 
             "TakerBuyBaseAssetVolume", "TakerBuyQuoteAssetVolume", "Ignore"
         ])
+        
         # Convert timestamps to datetime
         df["OpenTime"] = pd.to_datetime(df["OpenTime"], unit='ms')
         df["CloseTime"] = pd.to_datetime(df["CloseTime"], unit='ms')
-        return df[["OpenTime", "Open", "High", "Low", "Close", "Volume"]]
+        return df
 
     def create_rolling_plots(self, symbol, start_date, end_date, output_dir="plots"):
         """
@@ -204,18 +215,13 @@ if __name__ == "__main__":
 
     # Example: Fetch BTCUSDT 15-minute data from 1 Jan 2020 to now
     data1 = fetcher.get_historical_data("SOLUSDT", "1h", "1 Jan 2024")
-    data2 = fetcher.get_historical_data("SOLUSDT", "4h", "1 Jan 2024")
-    data3 = fetcher.get_historical_data("SOLUSDT", "1d", "1 Jan 2024")
-
-    # Save to CSV
+    data1 = fetcher.get_historical_data("SOLUSDT", "1h", "1 Jan 2024")
     data1.to_csv("SOLUSDT_1h_data.csv", index=False)
-    data2.to_csv("SOLUSDT_4h_data.csv", index=False)
-    data3.to_csv("SOLUSDT_1d_data.csv", index=False)
 
-    # Example: Create rolling plots
-    fetcher.create_rolling_plots(
-        "SOLUSDT",
-        "1 Jan 2024",
-        "10 Jan 2024",
-        output_dir="solana_plots"
-    )
+    # # Example: Create rolling plots
+    # fetcher.create_rolling_plots(
+    #     "SOLUSDT",
+    #     "1 Jan 2024",
+    #     "10 Jan 2024",
+    #     output_dir="solana_plots"
+    # )
