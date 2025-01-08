@@ -43,18 +43,7 @@ class TrendAnalyzer:
         levels = re.findall(r'(\d+\.\d+)', output_message)
         levels = [float(level) for level in levels]
 
-        # plt.close('all')
-        # Draw horizontal lines on the 15m timeframe plot
-        # for fig in plots:
-        #     plt.figure(fig.number)
-        #     ax = fig.axes[0]  # Access the first subplot
-        #     for level in levels:
-        #         ax.axhline(y=level, color='r', linestyle='--')
-        #     plt.show()
-        #     plt.savefig(f"trend_analysis_{symbol}_{timeframes[0]}.png")
-        
         # Find the index of the "4h" timeframe
-
         if "4h" in timeframes:
             index_4h = timeframes.index("4h")
             fig_4h = plots[index_4h]
