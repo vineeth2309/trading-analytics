@@ -11,9 +11,11 @@ from agents.trend_analysis_agent import TrendAnalysisAgent
 class TrendAnalyzer:
     def __init__(
         self,
-        load_local=True
+        load_local=True,
+        base_path="data"
     ):
         self.load_local = load_local
+        self.base_path = base_path
         self.api_key = os.getenv("API_KEY")
         self.api_secret = os.getenv("API_SECRET")
         self.trend_analysis_agent = TrendAnalysisAgent(os.getenv("ANTHROPIC_API_KEY"))
@@ -21,7 +23,7 @@ class TrendAnalyzer:
     
     def load_data(self, symbol: str="SOLUSDT", timeframe: str="15m", from_date: str="1 Jan 2024"):
         if self.load_local:
-            return pd.read_csv(f"{symbol}_{timeframe}_data.csv")
+            return pd.read_csv(f"{self.base_path}/{symbol}_{timeframe}_data.csv")
         else:
             return self.fetcher.get_historical_data(symbol, timeframe, from_date)
 
@@ -39,9 +41,9 @@ class TrendAnalyzer:
 #       
         output_message = self.trend_analysis_agent.analyze(images)
         
-        # Parse the output message to extract levels
-        levels = re.findall(r'(\d+\.\d+)', output_message)
-        levels = [float(level) for level in levels]
+        # Updated regex to capture levels in both Support and Resistance sections
+        levels = re.findall(r'\d+:', output_message)
+        levels = [float(level.strip(':')) for level in levels]
 
         # Find the index of the "4h" timeframe
         if "4h" in timeframes:
