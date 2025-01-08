@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from binance.client import Client
 import mplfinance as mpf
 from tqdm import tqdm
+from io import StringIO
 
 class BinanceDataFetcher:
     def __init__(
@@ -109,8 +110,13 @@ class BinanceDataFetcher:
         ]
         for col in numeric_columns:
             df[col] = pd.to_numeric(df[col], errors='coerce')
-        os.makedirs(f"data2/", exist_ok=True)
-        df.to_csv(f"data2/{symbol}_{interval}_data.csv", index=False)
+        os.makedirs(f"data/", exist_ok=True)
+        df["OpenTime"] = df["OpenTime"].astype(str)  # Convert datetime to string
+        df["CloseTime"] = df["CloseTime"].astype(str)
+        df["Ignore"] = pd.to_numeric(df["Ignore"], errors='coerce').fillna(0).astype(int)
+        
+        df.to_csv(f"data/{symbol}_{interval}_data.csv", index=False)
+        print(df.dtypes)
         return df
 
     def plot_candlestick_and_volume(self, df, timeframe,figsize=(20, 10)):
@@ -131,7 +137,7 @@ class BinanceDataFetcher:
         # Convert OpenTime to datetime if it's not already
         df_mpf['OpenTime'] = pd.to_datetime(df_mpf['OpenTime'])
         df_mpf.set_index('OpenTime', inplace=True)
-            
+        
         # Plot candlesticks using mplfinance
         mpf.plot(df_mpf, type='candle', style='charles',
             ax=ax1, volume=False, 

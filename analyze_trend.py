@@ -23,7 +23,9 @@ class TrendAnalyzer:
     
     def load_data(self, symbol: str="SOLUSDT", timeframe: str="15m", from_date: str="1 Jan 2024"):
         if self.load_local:
-            return pd.read_csv(f"{self.base_path}/{symbol}_{timeframe}_data.csv")
+            df = pd.read_csv(f"{self.base_path}/{symbol}_{timeframe}_data.csv")
+            print(df.dtypes)
+            return df
         else:
             return self.fetcher.get_historical_data(symbol, timeframe, from_date)
 
@@ -67,7 +69,7 @@ class TrendAnalyzer:
 if __name__ == "__main__":
     load_dotenv('envs/.env')
 
-    load_local = True
+    load_local = False
 
     analyzer = TrendAnalyzer(load_local)
 
