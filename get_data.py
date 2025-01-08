@@ -8,6 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from binance.client import Client
 import mplfinance as mpf
+from tqdm import tqdm
 
 class BinanceDataFetcher:
     def __init__(
@@ -66,20 +67,28 @@ class BinanceDataFetcher:
         all_klines = []
         current_start = start_timestamp
 
-        while current_start < end_timestamp:
-            # Fetch klines
-            klines = self._get_klines(
-                symbol=symbol,
-                interval=interval,
-                start_time=current_start,
-                end_time=end_timestamp
-            )
-            if not klines:
-                break
+        # Calculate the total number of iterations needed
+        total_iterations = (end_timestamp - start_timestamp) // self.api_limit
 
-            # Add data and update current_start to the last fetched timestamp
-            all_klines.extend(klines)
-            current_start = klines[-1][6] + 1  # CloseTime + 1ms
+        # Wrap the while loop with tqdm for a progress bar
+        with tqdm(total=total_iterations, desc="Fetching data") as pbar:
+            while current_start < end_timestamp:
+                # Fetch klines
+                klines = self._get_klines(
+                    symbol=symbol,
+                    interval=interval,
+                    start_time=current_start,
+                    end_time=end_timestamp
+                )
+                if not klines:
+                    break
+
+                # Add data and update current_start to the last fetched timestamp
+                all_klines.extend(klines)
+                current_start = klines[-1][6] + 1  # CloseTime + 1ms
+
+                # Update the progress bar
+                pbar.update(1)
 
         self.data[symbol][interval].extend(all_klines)
         
@@ -100,6 +109,8 @@ class BinanceDataFetcher:
         ]
         for col in numeric_columns:
             df[col] = pd.to_numeric(df[col], errors='coerce')
+        os.makedirs(f"data2/", exist_ok=True)
+        df.to_csv(f"data2/{symbol}_{interval}_data.csv", index=False)
         return df
 
     def plot_candlestick_and_volume(self, df, timeframe,figsize=(20, 10)):
