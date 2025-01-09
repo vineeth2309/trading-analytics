@@ -58,7 +58,7 @@ class BinanceDataFetcher:
             self.data[symbol] = {}
         if interval not in self.data[symbol]:
             self.data[symbol][interval] = []
-            start_time = datetime.datetime.strptime(start_date, "%d %b %Y")
+            start_time = datetime.datetime.strptime(start_date, "%d %b %Y %H:%M")
             start_timestamp = int(start_time.timestamp() * self.api_limit)
         else:
             start_timestamp = self.data[symbol][interval][-1][6] + 1
@@ -67,7 +67,7 @@ class BinanceDataFetcher:
         if end_date is None:
             end_timestamp = int(time.time() * self.api_limit)
         else:
-            end_time = datetime.datetime.strptime(end_date, "%d %b %Y")
+            end_time = datetime.datetime.strptime(end_date, "%d %b %Y %H:%M")
             end_timestamp = int(end_time.timestamp() * self.api_limit)
 
         # Placeholder for all data

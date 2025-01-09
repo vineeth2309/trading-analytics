@@ -34,7 +34,7 @@ class TrendAnalyzer:
         self, 
         symbol, 
         timeframes, 
-        from_date: str="1 Jan 2024", 
+        from_date: str="1 Jan 2024 00:00", 
         end_date: str=None, 
         indicators: list=['rsi', 'vwap', 'supertrend']
     ):
@@ -62,7 +62,7 @@ class TrendAnalyzer:
         
         stage2_charts = []
         for timeframe in timeframes:
-            fig = self.fetcher.plot_indicators(data[timeframe].tail(200), indicators)
+            fig = self.fetcher.plot_indicators(data[timeframe].tail(50), indicators)
             for level in levels:    
                 fig.axes[0].axhline(y=level, color='r', linestyle='--')
             img_buf = io.BytesIO()
@@ -84,6 +84,8 @@ if __name__ == "__main__":
 
     analyzer = TrendAnalyzer(load_local)
 
-    analyzer.analyze_trend("SOLUSDT", ["15m", "1h", "4h", "1d"], from_date="11 Nov 2023", end_date="29 May 2024", indicators=['ema_20', 'ema_200', 'rsi'])
+    # analyzer.analyze_trend("BTCUSDT", ["15m", "1h", "4h", "1d"], from_date="11 Jun 2024 00:00", end_date="7 Jan 2025 11:00", indicators=['ema_20', 'ema_200', 'rsi'])
+    # analyzer.analyze_trend("BTCUSDT", ["15m", "1h", "4h", "1d"], from_date="11 Jan 2024 00:00", end_date="26 Dec 2024 07:30", indicators=['ema_20', 'ema_200', 'rsi'])
+    analyzer.analyze_trend("BTCUSDT", ["15m", "1h", "4h", "1d"], from_date="11 Jan 2024 00:00", end_date="9 Jan 2025 16:00", indicators=['ema_20', 'ema_200', 'rsi'])
     # analyzer.analyze_trend("SOLUSDT", ["15m", "1h", "4h", "1d"], indicators=['vwap'])
     
