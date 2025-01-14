@@ -287,8 +287,8 @@ class BinanceDataFetcher:
             max_val = max(df['High'].max(), df['vwap'].max())
             ax1.set_ylim(min_val * 0.95, max_val * 1.05)
         else:
-            ax1.set_ylim(df['Low'].min() * 0.95, df['High'].max() * 1.05)
-        xticks = df['OpenTime'].iloc[::10]  # Every 10th timestamp
+            ax1.set_ylim(df['Low'].min() * 0.97, df['High'].max() * 1.02)
+        xticks = df['OpenTime'].iloc[::7]  # Every 10th timestamp
         ax1.set_xticks(xticks)
         ax1.set_xticklabels([pd.to_datetime(x).strftime('%Y-%m-%d\n%H:%M') for x in xticks], rotation=90)
         plt.tight_layout()
