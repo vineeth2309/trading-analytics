@@ -49,7 +49,7 @@ class BinanceDataFetcher:
         Args:
             symbol: Trading pair (e.g., "BTCUSDT").
             interval: Timeframe (e.g., "15m", "4h", "1d").
-            start_date: Start date as a string (e.g., "1 Jan 2020").
+            start_date: Start date as a string (e.g., "1 Jan 2020 00:00:00").
         Returns:
             DataFrame containing the historical data.
         """
@@ -58,7 +58,7 @@ class BinanceDataFetcher:
             self.data[symbol] = {}
         if interval not in self.data[symbol]:
             self.data[symbol][interval] = []
-            start_time = datetime.datetime.strptime(start_date, "%d %b %Y %H:%M")
+            start_time = datetime.datetime.strptime(start_date, "%d %b %Y %H:%M:%S")
             start_timestamp = int(start_time.timestamp() * self.api_limit)
         else:
             start_timestamp = self.data[symbol][interval][-1][6] + 1
@@ -67,7 +67,7 @@ class BinanceDataFetcher:
         if end_date is None:
             end_timestamp = int(time.time() * self.api_limit)
         else:
-            end_time = datetime.datetime.strptime(end_date, "%d %b %Y %H:%M")
+            end_time = datetime.datetime.strptime(end_date, "%d %b %Y %H:%M:%S")
             end_timestamp = int(end_time.timestamp() * self.api_limit)
 
         # Placeholder for all data
@@ -107,8 +107,10 @@ class BinanceDataFetcher:
         ])
         
         # Convert timestamps to datetime
-        df["OpenTime"] = pd.to_datetime(df["OpenTime"], unit='ms')
-        df["CloseTime"] = pd.to_datetime(df["CloseTime"], unit='ms')
+        # For the daily timeframe, we need to add the hours, minutes, seconds
+        
+        df['OpenTime'] = pd.to_datetime(df['OpenTime'], unit='ms')
+        df['CloseTime'] = pd.to_datetime(df['CloseTime'], unit='ms')
         numeric_columns = [
             "Open", "High", "Low", "Close", "Volume",
             "QuoteAssetVolume", "NumberOfTrades",
@@ -117,6 +119,8 @@ class BinanceDataFetcher:
         for col in numeric_columns:
             df[col] = pd.to_numeric(df[col], errors='coerce')
         os.makedirs(f"data/", exist_ok=True)
+        df['OpenTime'] = df['OpenTime'].dt.strftime('%d %b %Y %H:%M:%S')
+        df['CloseTime'] = df['CloseTime'].dt.strftime('%d %b %Y %H:%M:%S')
         df["OpenTime"] = df["OpenTime"].astype(str)  # Convert datetime to string
         df["CloseTime"] = df["CloseTime"].astype(str)
         df["Ignore"] = pd.to_numeric(df["Ignore"], errors='coerce').fillna(0).astype(int)
@@ -192,15 +196,6 @@ class BinanceDataFetcher:
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=figsize, 
                                     gridspec_kw={'height_ratios': [3, 1]}, 
                                     sharex=True)
-        # fig = plt.figure(figsize=figsize)
-        # ax1 = fig.add_subplot(2, 1, 1)
-        # ax2 = fig.add_subplot(2, 1, 2)
-        
-        # gs = GridSpec(3, 1, height_ratios=[3, 1, 1])  # Initial grid spec
-        # print(gs)
-        # Create the first two axes
-        # ax1 = fig.add_subplot(gs[0, 0])  # First row
-        # ax2 = fig.add_subplot(gs[1, 0], sharex=ax1)  # Second row
         
         # Convert data for mplfinance
         df_mpf = df.copy()
@@ -208,38 +203,37 @@ class BinanceDataFetcher:
         # Convert OpenTime to datetime if it's not already
         df_mpf['OpenTime'] = pd.to_datetime(df_mpf['OpenTime'])
         df_mpf.set_index('OpenTime', inplace=True)
-        
         # Plot candlesticks using mplfinance
+        last_timestamp = df_mpf.index[-1]
         mpf.plot(df_mpf, type='candle', style='charles',
             ax=ax1, volume=False, 
             ylabel='Price',
-            datetime_format='%Y-%m-%d %H:%M',
-            show_nontrading=False
+            datetime_format='%Y-%m-%d %H:%M:%S',
+            show_nontrading=False, 
+            vlines=dict(vlines=[last_timestamp],colors=('r','g','b','c'))
         )
-    
-        df = df.copy()
+        #draw a vertical line at the last timestamp
+        copy_df = df.copy()
         # Precompute volume metrics using .loc to avoid SettingWithCopyWarning
-        df.loc[:, 'Volume_MA'] = df['Volume'].rolling(window=20).mean()
-        df.loc[:, 'Volume_Threshold'] = df['Volume'].mean() + 2 * df['Volume'].std()
-        df.loc[:, 'IsSpike'] = df['Volume'] > df['Volume_Threshold']
+        copy_df.loc[:, 'Volume_MA'] = copy_df['Volume'].rolling(window=20).mean()
+        copy_df.loc[:, 'Volume_Threshold'] = copy_df['Volume'].mean() + 2 * copy_df['Volume'].std()
+        copy_df.loc[:, 'IsSpike'] = copy_df['Volume'] > copy_df['Volume_Threshold']
         
         # Plot volume
-        colors = ['green' if spike else 'red' for spike in df['IsSpike']]
-        ax2.bar(df['OpenTime'], df['Volume'], color=colors, alpha=0.3, label='Volume')
-        ax2.plot(df['OpenTime'], df['Volume_MA'], color='orange', label='Volume MA', linewidth=1)
-        ax2.axhline(y=df['Volume_Threshold'].iloc[0], color='purple', 
+        colors = ['green' if spike else 'red' for spike in copy_df['IsSpike']]
+        ax2.bar(copy_df['OpenTime'], copy_df['Volume'], color=colors, alpha=0.3, label='Volume')
+        ax2.plot(copy_df['OpenTime'], copy_df['Volume_MA'], color='orange', label='Volume MA', linewidth=1)
+        ax2.axhline(y=copy_df['Volume_Threshold'].iloc[0], color='purple', 
                     linestyle='--', label='Spike Threshold', alpha=0.5)
-        
-        # Adjust legends and labels
-        ax1.legend(loc='upper left', fontsize=10)
-        ax2.legend(loc='upper right', fontsize=10)
-        ax2.set_ylabel('Volume', fontsize=12)
-        
+                
         # Set title
         plt.title(f'{timeframe} Timeframe Analysis', fontsize=14)
             
         # Display every 10th tick on the x-axis for the price chart
-        xticks = df['OpenTime'].iloc[::10]  # Every 10th timestamp
+        # Get every 10th timestamp and append the last timestamp if not already included
+        xticks = list(copy_df['OpenTime'].iloc[::10])
+        if copy_df['OpenTime'].iloc[-1] not in xticks:
+            xticks.append(copy_df['OpenTime'].iloc[-1])
         ax1.set_xticks(xticks)
         ax1.set_xticklabels([pd.to_datetime(x).strftime('%Y-%m-%d\n%H:%M') for x in xticks], rotation=90)
         
