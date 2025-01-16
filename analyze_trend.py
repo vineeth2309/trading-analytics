@@ -86,6 +86,6 @@ if __name__ == "__main__":
 
     # analyzer.analyze_trend("BTCUSDT", ["15m", "1h", "4h", "1d"], from_date="11 Jun 2024 00:00", end_date="7 Jan 2025 11:00", indicators=['ema_20', 'ema_200', 'rsi'])
     # analyzer.analyze_trend("BTCUSDT", ["15m", "1h", "4h", "1d"], from_date="11 Jan 2024 00:00", end_date="26 Dec 2024 07:30", indicators=['ema_20', 'ema_200', 'rsi'])
-    analyzer.analyze_trend("BTCUSDT", ["15m", "1h", "4h", "1d"], from_date="11 Jan 2024 00:00", end_date="10 Jan 2025 22:00", indicators=['ema_20', 'ema_200', 'rsi'])
+    analyzer.analyze_trend("BTCUSDT", ["15m", "1h", "4h", "1d"], from_date="11 Jan 2024 00:00:00", end_date="10 Jan 2025 22:00:00", indicators=['ema_20', 'ema_200', 'rsi'])
     # analyzer.analyze_trend("SOLUSDT", ["15m", "1h", "4h", "1d"], indicators=['vwap'])
     
