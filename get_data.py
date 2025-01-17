@@ -58,17 +58,17 @@ class BinanceDataFetcher:
             self.data[symbol] = {}
         if interval not in self.data[symbol]:
             self.data[symbol][interval] = []
-            start_time = datetime.datetime.strptime(start_date, "%d %b %Y %H:%M:%S")
-            start_timestamp = int(start_time.timestamp() * self.api_limit)
+            start_time = datetime.datetime.strptime(start_date, "%d %b %Y %H:%M:%S").replace(tzinfo=datetime.timezone.utc)
+            start_timestamp = int(start_time.timestamp() * 1000)
         else:
             start_timestamp = self.data[symbol][interval][-1][6] + 1
         
         # Current time
         if end_date is None:
-            end_timestamp = int(time.time() * self.api_limit)
+            end_timestamp = int(time.time() * 1000)
         else:
-            end_time = datetime.datetime.strptime(end_date, "%d %b %Y %H:%M:%S")
-            end_timestamp = int(end_time.timestamp() * self.api_limit)
+            end_time = datetime.datetime.strptime(end_date, "%d %b %Y %H:%M:%S").replace(tzinfo=datetime.timezone.utc)
+            end_timestamp = int(end_time.timestamp() * 1000)
 
         # Placeholder for all data
         all_klines = []
@@ -124,7 +124,6 @@ class BinanceDataFetcher:
         df["OpenTime"] = df["OpenTime"].astype(str)  # Convert datetime to string
         df["CloseTime"] = df["CloseTime"].astype(str)
         df["Ignore"] = pd.to_numeric(df["Ignore"], errors='coerce').fillna(0).astype(int)
-        
         # df.to_csv(f"data/{symbol}_{interval}_data.csv", index=False)
         return df
 
@@ -204,13 +203,13 @@ class BinanceDataFetcher:
         df_mpf['OpenTime'] = pd.to_datetime(df_mpf['OpenTime'])
         df_mpf.set_index('OpenTime', inplace=True)
         # Plot candlesticks using mplfinance
-        last_timestamp = df_mpf.index[-1]
+        # last_timestamp = df_mpf.index[-1]
         mpf.plot(df_mpf, type='candle', style='charles',
             ax=ax1, volume=False, 
             ylabel='Price',
             datetime_format='%Y-%m-%d %H:%M:%S',
             show_nontrading=False, 
-            vlines=dict(vlines=[last_timestamp],colors=('r','g','b','c'))
+            # vlines=dict(vlines=[last_timestamp],colors=('r','g','b','c'))
         )
         #draw a vertical line at the last timestamp
         copy_df = df.copy()
