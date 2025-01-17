@@ -1,0 +1,9 @@
+symbol: SOLUSDT
+timeframes: ['15m', '1h', '4h', '1d']
+from_date: "1 Jan 2024 00:00:00"
+current_time: null
+end_date: "1 Jan 2025 00:00:00"
+time_increment: 5
+indicators: ['rsi', 'vwap', 'ema_20', 'ema_200']
+load_local: False
+save_path: "downloaded_data"
