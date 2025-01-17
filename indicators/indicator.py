@@ -7,14 +7,12 @@ def ema(df, length):
     
     Parameters:
     df (pd.DataFrame): DataFrame containing the data.
-    column (str): The column name for which to calculate the EMA.
     length (int): The span (period) for the EMA.
     
     Returns:
-    pd.Series: The EMA values.
+    pd.DataFrame: The DataFrame with the EMA column added.
     """
-    # update the df and return it with the new column
-    df[f"ema_{length}"] = df['Close'].ewm(span=length, adjust=False).mean()
+    df.loc[:, f"ema_{length}"] = df['Close'].ewm(span=length, adjust=False).mean()
     return df
 
 
@@ -26,11 +24,9 @@ def vwap(df):
     df (pd.DataFrame): DataFrame containing the data with 'High', 'Low', 'Close', 'Volume'.
     
     Returns:
-    pd.Series: The VWAP values.
+    pd.DataFrame: The DataFrame with the VWAP column added.
     """
-    # vwap = (df['Close'] * df['Volume']).cumsum() / df['Volume'].cumsum()
-    # df['vwap'] = vwap
-    df['vwap'] = (((df['High'] + df['Low'] + df['Close']) / 3) * df['Volume']).cumsum() / df['Volume'].cumsum()
+    df.loc[:, 'vwap'] = (((df['High'] + df['Low'] + df['Close']) / 3) * df['Volume']).cumsum() / df['Volume'].cumsum()
     return df
 
 def supertrend(df, length=10, multiplier=3):
@@ -144,7 +140,7 @@ def rsi(df, length=14):
     loss = (-delta.where(delta < 0, 0)).rolling(window=length).mean()
     rs = gain / loss
     rsi = 100 - (100 / (1 + rs))
-    df['rsi'] = rsi
+    df.loc[:, 'rsi'] = rsi
     
     return df
 
